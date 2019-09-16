@@ -39,7 +39,7 @@ WHERE `id` = {}
             os.system("rm -rf data user temp 2>/dev/null")
             os.system("mkdir data")
             with open("data/data.zip","wb") as f:
-                f.write(requests.post(link,data={"token":data_download_token,"id":sub['problem_id']}).content) 
+                f.write(requests.post(download_link,data={"token":data_download_token,"id":sub['problem_id']}).content) 
             os.system("unzip data/data.zip -d data")
             os.system("mkdir temp user")
             with open("user/code.cpp","w") as f:

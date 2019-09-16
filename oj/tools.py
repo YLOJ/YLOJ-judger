@@ -88,7 +88,7 @@ def reportCur(result='',score=None,time=-1,memory=-1,judge_info=''):
     sql="update submission set result='{}',score={},time_used={},memory_used={},judge_info='{}' where id={}".format(result,score,time,memory,pymysql.escape_string(judge_info),sys.argv[1])
     cursor.execute(sql)
     db.commit()
-    requests.post(link,{
+    requests.post(update_link,{
     'token':submission_update_token,
     'id': sys.argv[1],
     'result':result,
