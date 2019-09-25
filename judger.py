@@ -30,10 +30,10 @@ def compileCode():
         if type==0:
             status=runCommand("g++ {} -o {} -O2".format(code,code[:-4]))
         elif type==1:
-            moveIntoSandbox("data/grader.cpp",newName="grader.cpp")
+            grader=moveIntoSandbox("data/grader.cpp")
             header=config.get("header")
             moveIntoSandbox("data/{}".format(header),newName=header)
-            status=runCommand("g++ {} grader.cpp -o {} -O2".format(code,code[:-4]))
+            status=runCommand("g++ {} {} -o {} -O2".format(code,grader,code[:-4]))
 
         
     if(status.status==OK):
