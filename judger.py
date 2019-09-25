@@ -10,6 +10,11 @@ RunCommand=["./{}"]
 init()
 with open("data/config.yml") as f: 
     config=yaml.load(f,Loader=yaml.SafeLoader)
+type=config.get("type",0)
+if type==1:
+    if "token" in config:
+        has_token=True
+        token=config['token']
 with open("user/lang") as f: 
     lang=int(f.read())
 def compileCode():
@@ -19,7 +24,16 @@ def compileCode():
         s=runCommand('g++ {} -E | grep "pragma GCC optimize"'.format(code,code[:-4]),stdout=subprocess.PIPE)
         if s.status==OK:
             report(result="Judgement Failed",judge_info="拒绝评测")
-        status=runCommand("g++ {} -o {} -O2".format(code,code[:-4]))
+        global type 
+        if type==0:
+            status=runCommand("g++ {} -o {} -O2".format(code,code[:-4]))
+        elif type==1:
+            moveIntoSandbox("data/grader.cpp",newName="grader.cpp")
+            header=config.get("header")
+            moveIntoSandbox("data/{}".format(header),newName=header)
+            status=runCommand("g++ {} grader.cpp -o {} -O2".format(code,code[:-4]))
+
+        
     if(status.status==OK):
         moveOutFromSandbox(code[:-4],"code")
     elif(status.status==TLE):
@@ -49,6 +63,21 @@ def compileSpj():
 
 def runSpecialJudge(Input,Output,Answer,dataid):
     init()
+    global has_token
+
+    if has_token:
+        global token
+        with open(Output,"r") as f:
+            s=f.readlines()
+        for i in range(len(s)):
+            if(s[i][-1]=='\n'):
+                s[i]=s[i][:-1]
+        print(s[0],token)
+        if s[0]!=token:
+            return WA,0,"No Response"
+        else:
+            with open(Output,"w") as f:
+                f.write('\n'.join(s[1:]))
     Input=moveIntoSandbox(Input)
     Output=moveIntoSandbox(Output)
     Answer=moveIntoSandbox(Answer)
@@ -68,7 +97,7 @@ def runSpecialJudge(Input,Output,Answer,dataid):
         return JF,0,status.message
     elif status.code==7:
         # ???
-        return JF,0,status.message
+        return WA,0,status.message
     else:
         # PC
         return PC,status.code-16,message
@@ -109,8 +138,12 @@ try:
     if memoryLimit>1024000:
         report(result="Data Error",judge_info="memory limit is too huge")
     subtaskNum=config.get("subtask_num",0)
-    inputFile=config.get("input_file",None)
-    outputFile=config.get("output_file",None)
+    if type==0:
+        inputFile=config.get("input_file",None)
+        outputFile=config.get("output_file",None)
+    else:
+        inputFile=None
+        outputFile=None
     checkerType=config.get('checker',None)
     compileSpj()
     compileCode()
