@@ -11,10 +11,12 @@ init()
 with open("data/config.yml") as f: 
     config=yaml.load(f,Loader=yaml.SafeLoader)
 type=config.get("type",0)
+has_token=False
 if type==1:
     if "token" in config:
         has_token=True
         token=config['token']
+
 with open("user/lang") as f: 
     lang=int(f.read())
 def compileCode():
