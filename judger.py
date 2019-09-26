@@ -74,7 +74,6 @@ def runSpecialJudge(Input,Output,Answer,dataid):
         for i in range(len(s)):
             if(s[i][-1]=='\n'):
                 s[i]=s[i][:-1]
-        print(s[0],token)
         if s[0]!=token:
             return WA,0,"No Response"
         else:
