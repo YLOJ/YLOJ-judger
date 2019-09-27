@@ -89,23 +89,23 @@ def runSpecialJudge(Input,Output,Answer,dataid):
         message=f.read()
     if status.code==0:
         # AC
-        return AC,100,message
+        return AC,100,"ok "+message
     elif status.code==1 or status.code==4 or status.code==5:
         # WA
-        return WA,0,message 
+        return WA,0,"wrong answer "+message 
     elif status.code==2 or status.code==8:
         # PE
-        return PE,0,message 
+        return PE,0,"wrong answer "+message 
     elif status.code==3:
         # JF
         return JF,0,message
     elif status.code==7:
         # PC
         score=int(float(message.split(' ')[0])*100+1e-9)
-        return PC,score,message
+        return PC,score,"points "+message
     else:
         # PC
-        return PC,status.code-16,message
+        return PC,status.code-16,"points "+message
 
 def runProgram(Input,Answer,dataid):
     global inputFile,outputFile,lang,timeLimit,memoryLimit
