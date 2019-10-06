@@ -62,7 +62,7 @@ WHERE `id` = {}
             with open("user/code.cpp","w") as f:
                 f.write(sub['code'])
             with open("user/input","w") as f:
-                f.write(sub['input'])
+                f.write(str(sub['input']))
             with open("user/lang","w") as f:
                 f.write("0\n")
             print('start judging customtest',sid)

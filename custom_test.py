@@ -4,7 +4,7 @@ __author__ = 'QAQ AutoMaton'
 
 import yaml,sys,json
 from oj import *
-
+import time
 import pymysql
 def report(message):
     if len(sys.argv)==1:
@@ -15,6 +15,7 @@ def report(message):
         #message=pymysql.escape_string(message)
         cursor.execute("update custom_tests set output=%s where id=%s",(message,sys.argv[1]))
         db.commit()
+        time.sleep(1)
         req=requests.post(update_link+'/api/custom_test_update',{
         'token':submission_update_token,
         'id':sys.argv[1],
