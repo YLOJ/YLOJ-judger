@@ -67,9 +67,9 @@ def runCommand(command,timeLimit=10000,memoryLimit=1024000,stdin=None,stdout=Non
     returncode = child.returncode
 
     if not (returncode is None or returncode==0):
-        return runStatus(RE, time_used, max_memory,returncode,message=child.stderr.read(200))
+        return runStatus(RE, time_used, max_memory,returncode,message=child.stderr.read(200).decode())
     else:
-        return runStatus(OK, time_used, max_memory,returncode,message=child.stderr.read(200))
+        return runStatus(OK, time_used, max_memory,returncode,message=child.stderr.read(200).decode())
 def moveOutFromSandbox(oldName,newName=None):
     if(newName is None):
         newName=oldName
@@ -88,7 +88,7 @@ def reportCur(result='',score=None,time=-1,memory=-1,judge_info=''):
     sql="update submission set result='{}',score={},time_used={},memory_used={},judge_info='{}' where id={}".format(result,score,time,memory,pymysql.escape_string(judge_info),sys.argv[1])
     cursor.execute(sql)
     db.commit()
-    requests.post(update_link,{
+    requests.post(update_link+'/api/submission_update',{
     'token':submission_update_token,
     'id': sys.argv[1],
     'result':result,

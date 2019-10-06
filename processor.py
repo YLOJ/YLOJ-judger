@@ -54,5 +54,20 @@ WHERE `id` = {}
             else:
                 os.system("python3 judger.py {}".format(sid))
             print("done")
+        elif Type=='customtest':
+            cursor.execute("select * from custom_tests where id={}".format(sid))
+            sub=cursor.fetchone()
+            os.system("rm -rf user temp 2>/dev/null")
+            os.system("mkdir user temp")
+            with open("user/code.cpp","w") as f:
+                f.write(sub['code'])
+            with open("user/input","w") as f:
+                f.write(sub['input'])
+            with open("user/lang","w") as f:
+                f.write("0\n")
+            print('start judging customtest',sid)
+            os.system("python3 custom_test.py {}".format(sid))
+            print('done')
+
     except Exception as e:
         print (e)
