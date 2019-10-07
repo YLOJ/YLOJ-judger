@@ -84,7 +84,7 @@ def runSpecialJudge(Input,Output,Answer,dataid):
     Answer=moveIntoSandbox(Answer)
     spj=moveIntoSandbox("temp/chk")
     result_file=randomString()
-    status=runCommand("./{} {} {} {} {}".format(spj,Input,Output,Answer,result_file))
+    status=runCommand("./{} {} {} {} {}".format(spj,Input,Output,Answer,result_file),noFork=True)
     with open("{}/tmp/{}".format(pathOfSandbox,result_file)) as f:
         message=f.read()
     if status.code==0:
@@ -122,6 +122,7 @@ def runProgram(Input,Answer,dataid):
         timeLimit=timeLimit,memoryLimit=memoryLimit,
         stdin=open(Input,"r") if inputFile is None else None,
         stdout=open(Output,"w") if outputFile is None else None,
+        noFork=True
         )
     if status.status==OK:
         if(not (outputFile is None)):

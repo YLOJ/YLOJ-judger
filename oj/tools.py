@@ -35,9 +35,14 @@ def kill(pid):
             kill(i.split()[1])
     os.system("kill {}".format(pid))
 
-def runCommand(command,timeLimit=10000,memoryLimit=1024000,stdin=None,stdout=None):
+def runCommand(command,timeLimit=10000,memoryLimit=1024000,stdin=None,stdout=None,noFork=False):
     if not os.path.isdir("/sys/fs/cgroup/memory/{}".format(cgroup_name)):
         os.mkdir("/sys/fs/cgroup/memory/{}".format(cgroup_name))
+    if noFork:
+        if not os.path.isdir("/sys/fs/cgroup/pids/{}".format(cgroup_name)):
+            os.mkdir("/sys/fs/cgroup/pids/{}".format(cgroup_name))
+        with open("/sys/fs/cgroup/pids/{}/pids.max".format(cgroup_name),"w") as f:
+            f.write('3')
     max_memory = 0
     time_used = 0
     with open(pathOfSandbox+"/a.sh","w") as f:
@@ -48,6 +53,9 @@ def runCommand(command,timeLimit=10000,memoryLimit=1024000,stdin=None,stdout=Non
         before=int(f.read())
     with open("/sys/fs/cgroup/memory/{}/cgroup.procs".format(cgroup_name),"w") as f:
         f.write(str(child.pid)+'\n')
+    if noFork:
+        with open("/sys/fs/cgroup/pids/{}/cgroup.procs".format(cgroup_name),"w") as f:
+            f.write(str(child.pid)+'\n')
     while child.poll() is None:
         try:
             with open("/sys/fs/cgroup/memory/{}/memory.usage_in_bytes".format(cgroup_name),"r") as f:

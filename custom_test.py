@@ -36,7 +36,7 @@ if lang==0:
         status=runCommand(
                 "./{}".format(code),
                 stdin=open("user/input","r"),
-                stdout=open("user/output","w"))
+                stdout=open("user/output","w"),noFork=True)
         out=open("user/output","r").read(10245)
         if(len(out)>10240):
             out=out[:10240]+'...'
