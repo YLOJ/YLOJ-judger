@@ -8,6 +8,10 @@ from oj.env import *
 
 cmd_select = "SELECT * FROM submission WHERE `id` = {}"
 r=redis.Redis(host=redishost,port=redisport,password=redispassword)
+banlist=open("banlist","r").readlines()
+for i in range(len(banlist)):
+    if banlist[i][-1]=='\n':
+        banlist[i]=banlist[i][:-1]
 while True:
     try:
         ls=r.blpop('submission')[1].split()
@@ -26,6 +30,9 @@ while True:
         if Type=='test':
             cursor.execute(cmd_select.format(sid))
             sub = cursor.fetchone()
+            if sub['user_name'] in banlist:
+                print("BANNED!")
+                continue
             if('pragma' in sub['source_code']):
                 cursor.execute("""
 UPDATE submission SET
@@ -57,6 +64,9 @@ WHERE `id` = {}
         elif Type=='customtest':
             cursor.execute("select * from custom_tests where id={}".format(sid))
             sub=cursor.fetchone()
+            if sub['username'] in banlist:
+                print("BANNED!")
+                continue
             os.system("rm -rf user temp 2>/dev/null")
             os.system("mkdir user temp")
             with open("user/code.cpp","w") as f:
