@@ -30,9 +30,6 @@ while True:
         if Type=='test':
             cursor.execute(cmd_select.format(sid))
             sub = cursor.fetchone()
-            if sub['user_name'] in banlist:
-                print("BANNED!")
-                continue
             if('pragma' in sub['source_code']):
                 cursor.execute("""
 UPDATE submission SET
