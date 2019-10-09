@@ -30,10 +30,10 @@ class runStatus(object):
         return "runStatus(status:{},time:{},memory:{},code:{},message:{})".format(self.status,self.time,self.memory,self.code,self.message)
 
 def kill(pid):
-    for i in os.popen("ps -ef"):
+    for i in os.popen("ps -aef").readlines():
         if(i.split()[2]==str(pid)):
             kill(i.split()[1])
-    os.system("kill {}".format(pid))
+    os.system("kill -9 {}".format(pid))
 
 def runCommand(command,timeLimit=10000,memoryLimit=1024000,stdin=None,stdout=None,noFork=False):
     if not os.path.isdir("/sys/fs/cgroup/memory/{}".format(cgroup_name)):
@@ -42,7 +42,7 @@ def runCommand(command,timeLimit=10000,memoryLimit=1024000,stdin=None,stdout=Non
         if not os.path.isdir("/sys/fs/cgroup/pids/{}".format(cgroup_name)):
             os.mkdir("/sys/fs/cgroup/pids/{}".format(cgroup_name))
         with open("/sys/fs/cgroup/pids/{}/pids.max".format(cgroup_name),"w") as f:
-            f.write('3')
+            f.write('4')
     max_memory = 0
     time_used = 0
     with open(pathOfSandbox+"/a.sh","w") as f:
