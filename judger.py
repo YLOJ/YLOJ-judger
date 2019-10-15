@@ -137,12 +137,16 @@ totalTime=0
 maxMemory=0
 try:
     reportCur(result="Compiling")
-    timeLimit=int(config.get("time_limit",1000))
-    if timeLimit>20000:
-        report(result="Data Error",judge_info="time limit is too huge")
-    memoryLimit=config.get("memory_limit",256000)
-    if memoryLimit>1024000:
-        report(result="Data Error",judge_info="memory limit is too huge")
+    sameTL=bool(config.get("time_limit_same",True))
+    sameML=bool(config.get("memory_limit_same",True))
+    if sameTL :
+        timeLimit=int(config.get("time_limit",1000))
+        if timeLimit>20000:
+            report(result="Data Error",judge_info="time limit is too huge")
+    if sameML :
+        memoryLimit=config.get("memory_limit",256000)
+        if memoryLimit>1024000:
+            report(result="Data Error",judge_info="memory limit is too huge")
     subtaskNum=config.get("subtask_num",0)
     if type==0:
         inputFile=config.get("input_file",None)
@@ -160,6 +164,14 @@ try:
         sub=config.get("subtask{}".format(subId),{})
         Full=sub.get("score",0)
         Type=sub.get("type","sum") 
+        if not sameTL:
+            timeLimit=int(sub.get("time_limit",1000))
+            if timeLimit>20000:
+                report(result="Data Error",judge_info="time limit of subtask{} is too huge".format(subId))
+        if not sameML:
+            memoryLimit=sub.get("memory_limit",256000)
+            if memoryLimit>1024000:
+                report(result="Data Error",judge_info="memory limit of subtask {} is too huge".format(subId))
         subScore[subId]=100 if Type=="min" else 0
         if(Type=="min"):
             dependency=sub.get("dependency",[])
