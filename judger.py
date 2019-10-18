@@ -136,7 +136,7 @@ totalScore=0
 totalTime=0
 maxMemory=0
 try:
-    reportCur(result="Compiling")
+    reportCur(result="Compiling",score="-1")
     sameTL=bool(config.get("time_limit_same",True))
     sameML=bool(config.get("memory_limit_same",True))
     if sameTL :
@@ -182,9 +182,8 @@ try:
         for dataId in range(1,dataNum+1):
             if acm_mode:
                 reportCur(result="Running",
-                score=-1,
             time=totalTime,
-            memory=maxMemory)
+            memory=maxMemory,score="-1")
             else:
                 reportCur(result="Running on Test {}.{}".format(subId,dataId),
             score=totalScore+(subScore[subId]*Full//100 if Type=="min" else subScore[subId]*Full//100//dataNum),
@@ -196,7 +195,7 @@ try:
             totalTime+=dataStatus.time
             maxMemory=max(maxMemory,dataStatus.memory)
             if dataStatus.status!=AC and acm_mode:
-                report(score=-1,result=judgeStatus[dataStatus.status],time=totalTime,memory=maxMemory)
+                report(result=judgeStatus[dataStatus.status],time=totalTime,memory=maxMemory)
 
             subScore[subId]=min(subScore[subId],dataStatus.score) if Type=="min" else subScore[subId]+ dataStatus.score
             subInfo[dataId]=toList(dataStatus)
@@ -214,7 +213,7 @@ try:
             subInfo[i][0]=status[i]
         info.append(subInfo)
     if acm_mode:
-        report(result="Accepted",score=-1,time=totalTime,memory=maxMemory)
+        report(result="Accepted",score=100,time=totalTime,memory=maxMemory)
     else:
         report(result="Accepted" if totalScore==100 else "Unaccepted",
         score=totalScore,

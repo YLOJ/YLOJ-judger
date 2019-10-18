@@ -90,7 +90,7 @@ def judgingMessage(message):
 
 def reportCur(result='',score=None,time=-1,memory=-1,judge_info=''):
     if score==None:
-        score = -1 if len(sys.argv)>2 and sys.argv[2]=="acm" else 0
+        score=0
     db=pymysql.connect(host,user,password,database)
     cursor=db.cursor()
     sql="update submission set result='{}',score={},time_used={},memory_used={},judge_info='{}' where id={}".format(result,score,time,memory,pymysql.escape_string(judge_info),sys.argv[1])
