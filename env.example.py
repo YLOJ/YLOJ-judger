@@ -9,5 +9,5 @@ redispassword='password'
 submission_update_token="token"
 update_link="http://localhost"
 cgroup_name="cgroup1"
-data_path="/home/lk/YLOJ/storage/app/data"
+data_path="/path/to/YLOJ/storage/app/data"
 
