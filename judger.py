@@ -197,7 +197,7 @@ try:
             for dataId in range(1,dataNum+1):
                 if not acm_mode:
                     reportCur(result=RN,data_id="{}.{}".format(subId,dataId),
-                    score=totalScore+(subScore[subId]*Full//100 if Type=="min" else subScore[subId]*Full//100//dataNum),
+                    score=totalScore+(subScore[subId]*Full//100//dataNum if Type=="sum" else subScore[subId]*Full//100),
                     time=totalTime,
                     memory=maxMemory)
                 if (Type=="min" or Type=="pass") and subScore[subId]==0:
@@ -216,7 +216,7 @@ try:
                 elif Type=="min":
                     subScore[subId]=min(subScore[subId],dataStatus.score)
                 else:
-                    subScore[subId]+dataStatus.score
+                    subScore[subId]+=dataStatus.score
                 subInfo.append(toList(dataStatus))
             subtaskScore=Full*subScore[subId]//100
             if Type=="sum":
