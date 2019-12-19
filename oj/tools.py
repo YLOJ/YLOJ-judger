@@ -83,28 +83,23 @@ def moveOutFromSandbox(oldName,newName=None):
         newName=oldName
     os.system("cp {}/tmp/{} temp/{}".format(pathOfSandbox,oldName,newName))
     return newName
-def judgingMessage(message):
-    pass
-    # TODO
-    # print("judging:",message)
 
-def reportCur(result='',score=None,time=-1,memory=-1,judge_info=''):
-    if score==None:
-        score=0
+def reportCur(result=0,score=0,time=-1,memory=-1,judge_info='',data_id=""):
     db=pymysql.connect(host,user,password,database)
     cursor=db.cursor()
-    sql="update submission set result='{}',score={},time_used={},memory_used={},judge_info='{}' where id={}".format(result,score,time,memory,pymysql.escape_string(judge_info),sys.argv[1])
+    sql="update submission set data_id='{}',result={},score={},time_used={},memory_used={},judge_info='{}' where id={}".format(data_id,result,score,time,memory,pymysql.escape_string(judge_info),sys.argv[1])
     cursor.execute(sql)
     db.commit()
     requests.post(update_link+'/api/submission_update',{
     'token':submission_update_token,
     'id': sys.argv[1],
     'result':result,
+    'data_id':data_id,
     'score':score,
     'time':time,
     'memory':memory
         });
 
-def report(result='',score=None,time=-1,memory=-1,judge_info=''):
-    reportCur(result,score,time,memory,judge_info)
+def report(result=0,score=0,time=-1,memory=-1,judge_info='',data_id=""):
+    reportCur(result,score,time,memory,judge_info,data_id)
     sys.exit()

@@ -5,7 +5,7 @@ __author__ = 'QAQ AutoMaton'
 import yaml,sys,json
 from oj import *
 acm_mode=len(sys.argv)>2 and sys.argv[2]=="acm"
-default_score=-1 if acm_mode else 0
+default_score=0
 RunCommand=["./{}"]
 init()
 with open("data/config.yml") as f: 
@@ -21,11 +21,12 @@ with open("user/lang") as f:
     lang=int(f.read())
 def compileCode():
     init()
+    global lang
     if lang==0:
         code=moveIntoSandbox("user/code.cpp")
         s=runCommand('g++ {} -E | grep "pragma GCC optimize"'.format(code,code[:-4]),stdout=subprocess.PIPE)
         if s.status==OK:
-            report(result="Judgement Failed",judge_info="拒绝评测")
+            report(result=JF,judge_info="拒绝评测")
         global type 
         if type==0:
             status=runCommand("g++ {} -o {} -O2".format(code,code[:-4]))
@@ -33,35 +34,31 @@ def compileCode():
             grader=moveIntoSandbox("data/grader.cpp")
             header=config.get("header")
             moveIntoSandbox("data/{}".format(header),newName=header)
-            status=runCommand("g++ {} {} -o {} -O2".format(code,grader,code[:-4]))
-
-        
+            status=runCommand("g++ {} {} -o {} -O2".format(code,grader,code[:-4]))       
     if(status.status==OK):
         moveOutFromSandbox(code[:-4],"code")
     elif(status.status==TLE):
-        report(result="Compiler Time Limit Exceeded")
+        report(result=CTLE)
     else:
-        report(result="Compile Error",judge_info=status.message)
+        report(result=CE,judge_info=status.message)
 
 def compileSpj():
     global checkerType
     init()
     if(checkerType is None): 
         if not os.path.isfile('data/chk.cpp'):
-            report('Data Error',judge_info="Checker Not Found")
+            report(DE,judge_info="Checker Not Found")
         moveIntoSandbox("data/chk.cpp",newName="chk.cpp")
     else:
         if not os.path.isfile("builtin/{}.cpp".format(checkerType)):
-            report('Data Error',judge_info="Checker Not Found")
+            report(DE,judge_info="Checker Not Found")
         moveIntoSandbox("builtin/{}.cpp".format(checkerType),newName="chk.cpp")
     moveIntoSandbox("testlib.h",newName="testlib.h")
     status=runCommand("g++ chk.cpp -o chk -O2")
     if(status.status==OK):
         moveOutFromSandbox("chk")
-    elif(status.status==TLE):
-        report(score=0,result="Special Judge Compiler Time Limit Exceeded")
     else:
-        report(score=0,result="Special Judge Compile Error",judge_info=judgeStatus[status.status]+'\n'+status.message)
+        report(score=0,result=SE,judge_info=judgeStatus[status.status]+'\n'+status.message)
 
 def runSpecialJudge(Input,Output,Answer,dataid):
     init()
@@ -111,9 +108,9 @@ def runProgram(Input,Answer,dataid):
     global inputFile,outputFile,lang,timeLimit,memoryLimit
     init()
     if not os.path.exists(Input) :
-        report(result='Data Error',judge_info='file '+Input+' not found')
+        report(result=DE,judge_info='file '+Input+' not found')
     if not os.path.exists(Answer):
-        report(result='Data Error',judge_info='file '+Answer+' not found')
+        report(result=DE,judge_info='file '+Answer+' not found')
     if not(inputFile is None):
         moveIntoSandbox(Input,inputFile)
     Output="temp/output"
@@ -136,17 +133,18 @@ totalScore=0
 totalTime=0
 maxMemory=0
 try:
-    reportCur(result="Compiling",score="-1")
+    result=AC
+    reportCur(result=CP,score="-1")
     sameTL=bool(config.get("time_limit_same",True))
     sameML=bool(config.get("memory_limit_same",True))
     if sameTL :
         timeLimit=int(config.get("time_limit",1000))
         if timeLimit>20000:
-            report(result="Data Error",judge_info="time limit is too huge")
+            report(result=DE,judge_info="time limit is too huge")
     if sameML :
         memoryLimit=config.get("memory_limit",256000)
         if memoryLimit>1024000:
-            report(result="Data Error",judge_info="memory limit is too huge")
+            report(result=DE,judge_info="memory limit is too huge")
     subtaskNum=config.get("subtask_num",0)
     if type==0:
         inputFile=config.get("input_file",None)
@@ -162,65 +160,78 @@ try:
     acm_result=""
     for subId in range(1,subtaskNum+1):
         sub=config.get("subtask{}".format(subId),{})
+        if acm_mode:
+            score=0
+            sub['score']=100
+            sub['type']='pass'
+            if subId>1:
+                sub['dependency']=[subId-1]
         Full=sub.get("score",0)
         Type=sub.get("type","sum") 
         if not sameTL:
             timeLimit=int(sub.get("time_limit",1000))
             if timeLimit>20000:
-                report(result="Data Error",judge_info="time limit of subtask{} is too huge".format(subId))
+                report(result=DE,judge_info="time limit of subtask{} is too huge".format(subId))
         if not sameML:
             memoryLimit=sub.get("memory_limit",256000)
             if memoryLimit>1024000:
-                report(result="Data Error",judge_info="memory limit of subtask {} is too huge".format(subId))
-        subScore[subId]=100 if Type=="min" else 0
-        if(Type=="min"):
+                report(result=DE,judge_info="memory limit of subtask {} is too huge".format(subId))
+        subScore[subId]=100 if (Type=="min" or Type=="pass") else 0
+        if Type=="min" :
             dependency=sub.get("dependency",[])
             for Id in dependency:
                 subScore[subId]=min(subScore[subId],subScore[Id])
+        elif Type=="pass":
+            dependency=sub.get("dependency",[])
+            for Id in dependency:
+                if subScore[Id]<100:
+                    subScore[subId]=0
         dataNum=sub.get("data_num",0)
-        subInfo=[[SKIP,0]]+[[SKIP,0,0,0,"",0]]*dataNum
-        for dataId in range(1,dataNum+1):
+        subInfo=[]
+        if (Type=="min" or Type=="pass") and subScore[subId]==0:
+            subInfo.append([SKIP,0])
+        else:
+            subInfo.append([AC,0])
             if acm_mode:
-                reportCur(result="Running",
-            time=totalTime,
-            memory=maxMemory,score="-1")
-            else:
-                reportCur(result="Running on Test {}.{}".format(subId,dataId),
-            score=totalScore+(subScore[subId]*Full//100 if Type=="min" else subScore[subId]*Full//100//dataNum),
-            time=totalTime,
-            memory=maxMemory)
-            if Type=="min" and subScore[subId]==0:
-                break
-            dataStatus=runProgram("data/{}/data{}.in".format(subId,dataId),"data/{}/data{}.ans".format(subId,dataId),"{}.{}".format(subId,dataId))
-            totalTime+=dataStatus.time
-            maxMemory=max(maxMemory,dataStatus.memory)
-            if dataStatus.status!=AC and acm_mode:
-                report(result=judgeStatus[dataStatus.status],time=totalTime,memory=maxMemory)
+                reportCur(result=RN)
+            for dataId in range(1,dataNum+1):
+                if not acm_mode:
+                    reportCur(result=RN,data_id="{}.{}".format(subId,dataId),
+                    score=totalScore+(subScore[subId]*Full//100 if Type=="min" else subScore[subId]*Full//100//dataNum),
+                    time=totalTime,
+                    memory=maxMemory)
+                if (Type=="min" or Type=="pass") and subScore[subId]==0:
+                    break
+                dataStatus=runProgram("data/{}/data{}.in".format(subId,dataId),"data/{}/data{}.ans".format(subId,dataId),"{}.{}".format(subId,dataId))
+                totalTime+=dataStatus.time
+                maxMemory=max(maxMemory,dataStatus.memory)
+                if dataStatus.status!=AC:
+                    if result==AC:
+                        result=dataStatus.status
+                    if subInfo[0][0]==AC:
+                        subInfo[0][0]=dataStatus.status
+                if Type=="pass":
+                    if dataStatus.status!=AC:
+                        subScore[subId]=0
+                elif Type=="min":
+                    subScore[subId]=min(subScore[subId],dataStatus.score)
+                else:
+                    subScore[subId]+dataStatus.score
+                subInfo.append(toList(dataStatus))
+            subtaskScore=Full*subScore[subId]//100
+            if Type=="sum":
+                subtaskScore//=dataNum
+            totalScore+=subtaskScore
+            subInfo[0][1]=subtaskScore
 
-            subScore[subId]=min(subScore[subId],dataStatus.score) if Type=="min" else subScore[subId]+ dataStatus.score
-            subInfo[dataId]=toList(dataStatus)
-        subtaskScore=Full*subScore[subId]//100
-        if Type=="sum":
-            subtaskScore//=dataNum
-        subInfo[0][0]="Accepted" if subtaskScore==Full else "Unaccepted"
-        subInfo[0][1]=subtaskScore
-        totalScore+=subtaskScore
-        status=[""]*(dataNum+1)
-        for i in range(1,dataNum+1):
-            status[i]=judgeStatus[subInfo[i][0]]
-
-        for i in range(1,dataNum+1):
-            subInfo[i][0]=status[i]
+        dataNum=len(subInfo)
+        status=[""]*(dataNum)
         info.append(subInfo)
-    if acm_mode:
-        report(result="Accepted",score=100,time=totalTime,memory=maxMemory)
-    else:
-        report(result="Accepted" if totalScore==100 else "Unaccepted",
-        score=totalScore,
-        time=totalTime,
-        memory=maxMemory,
-        judge_info=json.dumps(info))
+    report(result=result,
+    score=totalScore,
+    time=totalTime,
+    memory=maxMemory,
+    judge_info=json.dumps(info))
 except Exception as e: 
     print(e)
-    report(score=0,result="Judgement Failed",judge_info=str(e))
-
+    report(score=0,result=JF,judge_info=str(e))
