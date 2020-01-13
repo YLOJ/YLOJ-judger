@@ -82,8 +82,8 @@ def runSpecialJudge(Input,Output,Answer,dataid):
     spj=moveIntoSandbox("temp/chk")
     result_file=randomString()
     status=runCommand("./{} {} {} {} {}".format(spj,Input,Output,Answer,result_file),noFork=True)
-    with open("{}/tmp/{}".format(pathOfSandbox,result_file)) as f:
-        message=f.read()
+    with open("{}/tmp/{}".format(pathOfSandbox,result_file),"rb") as f:
+        message=str(f.read())[2:-1]
     if status.code==0:
         # AC
         return AC,100,"ok "+message
