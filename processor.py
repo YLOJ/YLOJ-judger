@@ -8,7 +8,12 @@ from oj.env import *
 
 cmd_select = "SELECT * FROM submission WHERE `id` = {}"
 r=redis.Redis(host=redishost,port=redisport,password=redispassword)
-banlist=open("banlist","r").readlines()
+banlist=[]
+try:
+    banlist=open("banlist","r").readlines()
+except Exception as e: 
+    pass
+    
 for i in range(len(banlist)):
     if banlist[i][-1]=='\n':
         banlist[i]=banlist[i][:-1]

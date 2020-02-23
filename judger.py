@@ -58,7 +58,7 @@ def compileSpj():
     if(status.status==OK):
         moveOutFromSandbox("chk")
     else:
-        report(score=0,result=SE,judge_info=judgeStatus[status.status]+'\n'+status.message)
+        report(score=0,result=SE,judge_info=status.message)
 
 def runSpecialJudge(Input,Output,Answer,dataid):
     init()
@@ -99,6 +99,12 @@ def runSpecialJudge(Input,Output,Answer,dataid):
     elif status.code==7:
         # PC
         score=int(float(message.split(' ')[0])*100+1e-9)
+        if score<=0:
+            score=0
+            return WA,score,"points "+message
+        if score>=100:
+            score=100
+            return AC,score,"points "+message
         return PC,score,"points "+message
     else:
         # PC
