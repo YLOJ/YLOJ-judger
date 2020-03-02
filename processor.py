@@ -5,6 +5,7 @@ import time
 import redis
 import requests
 from oj.env import *
+from oj.constant import *
 
 cmd_select = "SELECT * FROM submission WHERE `id` = {}"
 r=redis.Redis(host=redishost,port=redisport,password=redispassword)
@@ -41,11 +42,11 @@ while True:
             if('pragma' in sub['source_code']):
                 cursor.execute("""
 UPDATE submission SET
-`result` = 'Judgement Failed',
+`result` = {}',
 `score` = 0,
 `judge_info` = '拒绝评测'
 WHERE `id` = {}
-""".format(sid))
+""".format(JF,sid))
                 conn.commit()
                 continue
             os.system("rm -rf data user temp 2>/dev/null")

@@ -28,7 +28,7 @@ def compileCode():
         if s.status==OK:
             report(result=JF,judge_info="拒绝评测")
         global type 
-        if type==0:
+        if type==0 or type==2:
             status=runCommand("g++ {} -o {} -O2".format(code,code[:-4]))
         elif type==1:
             grader=moveIntoSandbox("data/grader.cpp")
@@ -42,8 +42,20 @@ def compileCode():
     else:
         report(result=CE,judge_info=status.message)
 
+
 def compileSpj():
-    global checkerType
+    global checkerType,type
+    if type==2:
+        if not os.path.isfile('data/interactor.cpp'):
+            report(DE,judge_info="Interactor Not Found")
+        code=moveIntoSandbox("data/interactor.cpp")
+        moveIntoSandbox("testlib.h",newName="testlib.h")
+        status=runCommand("g++ {} -o {} -O2".format(code,code[:-4]))
+        if(status.status==OK):
+            moveOutFromSandbox(code[:-4],"interactor")
+        else:
+            report(score=0,result=SE,judge_info=status.message)
+        return
     init()
     if(checkerType is None): 
         if not os.path.isfile('data/chk.cpp'):
@@ -82,37 +94,23 @@ def runSpecialJudge(Input,Output,Answer,dataid):
     spj=moveIntoSandbox("temp/chk")
     result_file=randomString()
     status=runCommand("./{} {} {} {} {}".format(spj,Input,Output,Answer,result_file),noFork=True)
-    with open("{}/tmp/{}".format(pathOfSandbox,result_file),"rb") as f:
-        message=str(f.read())[2:-1]
-    if status.code==0:
-        # AC
-        return AC,100,"ok "+message
-    elif status.code==1 or status.code==4 or status.code==5:
-        # WA
-        return WA,0,"wrong answer "+message 
-    elif status.code==2 or status.code==8:
-        # PE
-        return PE,0,"wrong answer "+message 
-    elif status.code==3:
-        # WA 
-        return WA,0,message
-    elif status.code==7:
-        # PC
-        score=int(float(message.split(' ')[0])*100+1e-9)
-        if score<=0:
-            score=0
-            return WA,score,"points "+message
-        if score>=100:
-            score=100
-            return AC,score,"points "+message
-        return PC,score,"points "+message
-    else:
-        # PC
-        return PC,status.code-16,"points "+message
+    moveOutFromSandbox(result_file,"result")
+    return testlib_status(status.code,"temp/result")
 
 def runProgram(Input,Answer,dataid):
-    global inputFile,outputFile,lang,timeLimit,memoryLimit
+    global inputFile,outputFile,lang,timeLimit,memoryLimit,type
     init()
+    if type==2:
+        init2()
+        code=moveIntoSandbox2("temp/code")
+        interactor=moveIntoSandbox("temp/interactor")
+        input=moveIntoSandbox(Input)
+        answer=moveIntoSandbox(Answer)
+        status=run2Command("./{} {} output {} result".format(interactor,input,answer),"./{}".format(code),timeLimit=timeLimit,memoryLimit=memoryLimit,noFork=True)
+        if status.status==OK:
+            report=moveOutFromSandbox("result")
+            status.status,status.score,status.message=testlib_status(status.code,"temp/result")
+        return status
     if not os.path.exists(Input) :
         report(result=DE,judge_info='file '+Input+' not found')
     if not os.path.exists(Answer):
@@ -139,6 +137,7 @@ totalScore=0
 totalTime=0
 maxMemory=0
 try:
+if True:
     result=AC
     reportCur(result=CP,score="-1")
     sameTL=bool(config.get("time_limit_same",True))
