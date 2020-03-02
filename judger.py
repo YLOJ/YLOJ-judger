@@ -94,8 +94,8 @@ def runSpecialJudge(Input,Output,Answer,dataid):
         # PE
         return PE,0,"wrong answer "+message 
     elif status.code==3:
-        # JF
-        return JF,0,message
+        # WA 
+        return WA,0,message
     elif status.code==7:
         # PC
         score=int(float(message.split(' ')[0])*100+1e-9)
