@@ -137,7 +137,6 @@ totalScore=0
 totalTime=0
 maxMemory=0
 try:
-if True:
     result=AC
     reportCur(result=CP,score="-1")
     sameTL=bool(config.get("time_limit_same",True))
