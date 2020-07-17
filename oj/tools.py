@@ -1,6 +1,6 @@
 #!/usr/bin/env python3 # -*- coding: utf-8 -*-
 __author__ = 'QAQ AutoMaton'
-import sys,pymysql,signal
+import sys,signal
 from .env import *
 from .constant import *
 import random,os,subprocess,psutil,time,requests
@@ -211,20 +211,17 @@ def moveOutFromSandbox2(oldName,newName=None):
     return newName
 
 def reportCur(result=0,score=0,time=-1,memory=-1,judge_info='',data_id=""):
-    db=pymysql.connect(host,user,password,database)
-    cursor=db.cursor()
-    sql="update submission set data_id='{}',result={},score={},time_used={},memory_used={},judge_info='{}' where id={}".format(data_id,result,score,time,memory,pymysql.escape_string(judge_info),sys.argv[1])
-    cursor.execute(sql)
-    db.commit()
-    requests.post(update_link+'/api/submission_update',{
+    if requests.post(update_link+'/api/submission_update',{
     'token':submission_update_token,
     'id': sys.argv[1],
     'result':result,
     'data_id':data_id,
     'score':score,
     'time':time,
-    'memory':memory
-        });
+    'memory':memory,
+    'judge_info':judge_info
+    }).text=="kill":
+        sys.exit()
 
 def report(result=0,score=0,time=-1,memory=-1,judge_info='',data_id=""):
     reportCur(result,score,time,memory,judge_info,data_id)
