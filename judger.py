@@ -108,7 +108,7 @@ def runProgram(Input,Answer,dataid):
         answer=moveIntoSandbox(Answer)
         status=run2Command("./{} {} output {} result".format(interactor,input,answer),"./{}".format(code),timeLimit=timeLimit,memoryLimit=memoryLimit,noFork=True)
         if status.status==OK:
-            report=moveOutFromSandbox("result")
+            moveOutFromSandbox("result")
             status.status,status.score,status.message=testlib_status(status.code,"temp/result")
         return status
     if not os.path.exists(Input) :

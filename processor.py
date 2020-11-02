@@ -42,7 +42,7 @@ while True:
             if('pragma' in sub['source_code']):
                 cursor.execute("""
 UPDATE submission SET
-`result` = {}',
+`result` = {},
 `score` = 0,
 `judge_info` = '拒绝评测'
 WHERE `id` = {}
