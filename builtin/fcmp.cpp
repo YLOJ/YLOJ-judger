@@ -17,14 +17,12 @@ int main(int argc, char * argv[])
     {
         std::string j = ans.readString();
 
-    	j.erase(j.find_last_not_of(" ") + 1);
         if (j == "" && ans.eof())
           break;
 
         strAnswer = j;
         std::string p = ouf.readString();
 
-    	p.erase(p.find_last_not_of(" ") + 1);
         n++;
 
         if (j != p)

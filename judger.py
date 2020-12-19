@@ -10,6 +10,10 @@ RunCommand=["./{}"]
 init()
 with open("data/config.yml") as f: 
     config=yaml.load(f,Loader=yaml.SafeLoader)
+if ( not "config" in config.keys() ) or ( not "testdata" in config.keys() ):
+    report(DE,judge_info="Invalid Config File")
+testdata=config['testdata']
+config=config['config']
 type=config.get("type",0)
 has_token=False
 if type==1:
@@ -70,9 +74,9 @@ def compileSpj():
     if(status.status==OK):
         moveOutFromSandbox("chk")
     else:
-        report(score=0,result=SE,judge_info=status.message)
+        report(score=0,result=SE,judge_info=status.status+status.message)
 
-def runSpecialJudge(Input,Output,Answer,dataid):
+def runSpecialJudge(Input,Output,Answer):
     init()
     global has_token
 
@@ -97,7 +101,7 @@ def runSpecialJudge(Input,Output,Answer,dataid):
     moveOutFromSandbox(result_file,"result")
     return testlib_status(status.code,"temp/result")
 
-def runProgram(Input,Answer,dataid):
+def runProgram(Input,Answer):
     global inputFile,outputFile,lang,timeLimit,memoryLimit,type
     init()
     if type==2:
@@ -128,7 +132,7 @@ def runProgram(Input,Answer,dataid):
     if status.status==OK:
         if(not (outputFile is None)):
             moveOutFromSandbox(outputFile,"output")
-        status.status,status.score,status.message=runSpecialJudge(Input,Output,Answer,dataid)
+        status.status,status.score,status.message=runSpecialJudge(Input,Output,Answer)
     return status 
 def toList(status):
     return [status.status,status.time,status.memory,status.code,status.message,status.score]
@@ -139,17 +143,16 @@ maxMemory=0
 try:
     result=AC
     reportCur(result=CP,score="-1")
-    sameTL=bool(config.get("time_limit_same",True))
-    sameML=bool(config.get("memory_limit_same",True))
-    if sameTL :
-        timeLimit=int(config.get("time_limit",1000))
-        if timeLimit>20000:
-            report(result=DE,judge_info="time limit is too huge")
-    if sameML :
-        memoryLimit=config.get("memory_limit",256000)
-        if memoryLimit>1024000:
-            report(result=DE,judge_info="memory limit is too huge")
+    tl=config.get("time_limit",1000)
+    if tl>20000:
+        report(result=DE,judge_info="time limit is too huge")
+    ml=config.get("memory_limit",256000)
+    if ml>1024000:
+        report(result=DE,judge_info="memory limit is too huge")
+
     subtaskNum=config.get("subtask_num",0)
+    if subtaskNum<=0:
+        report(result=DE,judge_info="invalid subtask_num")
     if type==0:
         inputFile=config.get("input_file",None)
         outputFile=config.get("output_file",None)
@@ -161,7 +164,6 @@ try:
     compileCode()
     subScore=[0]*(subtaskNum+1)
     info=[]
-    acm_result=""
     for subId in range(1,subtaskNum+1):
         sub=config.get("subtask{}".format(subId),{})
         if acm_mode:
@@ -172,15 +174,14 @@ try:
                 sub['dependency']=[subId-1]
         Full=sub.get("score",0)
         Type=sub.get("type","sum") 
-        if not sameTL:
-            timeLimit=int(sub.get("time_limit",1000))
-            if timeLimit>20000:
-                report(result=DE,judge_info="time limit of subtask{} is too huge".format(subId))
-        if not sameML:
-            memoryLimit=sub.get("memory_limit",256000)
-            if memoryLimit>1024000:
-                report(result=DE,judge_info="memory limit of subtask {} is too huge".format(subId))
+        timeLimit=int(sub.get("time_limit",tl))
+        if timeLimit>20000:
+            report(result=DE,judge_info="time limit of subtask{} is too huge".format(subId))
+        memoryLimit=sub.get("memory_limit",ml)
+        if memoryLimit>1024000:
+            report(result=DE,judge_info="memory limit of subtask {} is too huge".format(subId))
         subScore[subId]=100 if (Type=="min" or Type=="pass") else 0
+
         if Type=="min" :
             dependency=sub.get("dependency",[])
             for Id in dependency:
@@ -190,7 +191,12 @@ try:
             for Id in dependency:
                 if subScore[Id]<100:
                     subScore[subId]=0
-        dataNum=sub.get("data_num",0)
+        if not "subtask{}".format(subId) in testdata.keys():
+            report(result=DE,judge_info="no testdata in subtask {}".format(subId))
+        datas=testdata['subtask{}'.format(subId)]
+        if datas is None or len(datas)==0:
+            report(result=DE,judge_info="no testdata in subtask {}".format(subId))
+        dataNum=len(datas)
         subInfo=[]
         if (Type=="min" or Type=="pass") and subScore[subId]==0:
             subInfo.append([SKIP,0])
@@ -198,15 +204,20 @@ try:
             subInfo.append([AC,0])
             if acm_mode:
                 reportCur(result=RN)
-            for dataId in range(1,dataNum+1):
+
+            for dataId in range(dataNum):
+                data=datas[dataId] 
+                if len(data)!=2:
+                    report(result=DE,judge_info="Invalid test {}.{}".format(subId,dataId+1))
                 if not acm_mode:
-                    reportCur(result=RN,data_id="{}.{}".format(subId,dataId),
-                    score=totalScore+(subScore[subId]*Full//100//dataNum if Type=="sum" else subScore[subId]*Full//100),
-                    time=totalTime,
-                    memory=maxMemory)
+                    reportCur(result=RN,data_id="{}.{}".format(subId,dataId+1),
+                            score=totalScore+(subScore[subId]*Full//100//dataNum if Type=="sum" else subScore[subId]*Full//100),
+                            time=totalTime,
+                            memory=maxMemory)
+
                 if (Type=="min" or Type=="pass") and subScore[subId]==0:
                     break
-                dataStatus=runProgram("data/{}/data{}.in".format(subId,dataId),"data/{}/data{}.ans".format(subId,dataId),"{}.{}".format(subId,dataId))
+                dataStatus=runProgram('data/'+data[0],'data/'+data[1])
                 totalTime+=dataStatus.time
                 maxMemory=max(maxMemory,dataStatus.memory)
                 if dataStatus.status!=AC:
@@ -232,10 +243,10 @@ try:
         status=[""]*(dataNum)
         info.append(subInfo)
     report(result=result,
-    score=totalScore,
-    time=totalTime,
-    memory=maxMemory,
-    judge_info=json.dumps(info))
+            score=totalScore,
+            time=totalTime,
+            memory=maxMemory,
+            judge_info=json.dumps(info))
 except Exception as e: 
     print(e)
     report(score=0,result=JF,judge_info=str(e))
