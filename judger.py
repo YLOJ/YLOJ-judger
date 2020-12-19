@@ -74,7 +74,7 @@ def compileSpj():
     if(status.status==OK):
         moveOutFromSandbox("chk")
     else:
-        report(score=0,result=SE,judge_info=status.status+status.message)
+        report(score=0,result=SE,judge_info=status.message)
 
 def runSpecialJudge(Input,Output,Answer):
     init()
@@ -140,7 +140,8 @@ def toList(status):
 totalScore=0
 totalTime=0
 maxMemory=0
-try:
+#try:
+if True:
     result=AC
     reportCur(result=CP,score="-1")
     tl=config.get("time_limit",1000)
@@ -247,6 +248,6 @@ try:
             time=totalTime,
             memory=maxMemory,
             judge_info=json.dumps(info))
-except Exception as e: 
-    print(e)
-    report(score=0,result=JF,judge_info=str(e))
+#except Exception as e: 
+#    print(e)
+#    report(score=0,result=JF,judge_info=str(e))
